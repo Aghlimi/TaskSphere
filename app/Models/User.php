@@ -21,8 +21,20 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'email_verified_at',
+        'plain',
+        'role'
     ];
 
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'members', 'user_id', 'project_id');
+    }
+
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'assgins', 'user_id',  'task_id');
+    }
     /**
      * The attributes that should be hidden for serialization.
      *
