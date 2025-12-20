@@ -16,10 +16,11 @@ jobs:
            uses: shivammathur/setup-php@v2
            with:
              php-version: '8.4.1'
-         - name: run tests
+         - name: Install Dependencies 
            run: |
              composer install
              cp .env.example .env
              php artisan key:generate
              php artisan migrate
-             ./vendor/bin/phpunit --testsuite=Feature
+         - name: Run Feature Tests
+           run: ./vendor/bin/phpunit --testsuite=Feature
