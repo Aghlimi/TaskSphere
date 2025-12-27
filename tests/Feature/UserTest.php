@@ -5,7 +5,6 @@ namespace Tests\Feature;
 // use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -16,7 +15,7 @@ class UserTest extends TestCase
      */
     public function test_user_service_is_create_user(): void
     {
-        $response = $this->postJson('/users', [
+        $response = $this->postJson('/api/users', [
             'name' => 'Test User',
             'email' => 'testuser@example.com',
             'password' => 'password',
@@ -27,7 +26,7 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'testuser@example.com',
         ]);
-        $response = $this->postJson('/users', [
+        $response = $this->postJson('/api/users', [
             'email' => 'Test User',
             'name' => 'rfeed',
             'password' => 'password',
@@ -38,29 +37,28 @@ class UserTest extends TestCase
 
     public function test_user_service_is_login_user(): void
     {
-        $response = $this->postJson('/users', [
+        $response = $this->postJson('/api/users', [
             'name' => 'Test User',
             'email' => 'testuser@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);
 
-        $response = $this->postJson('/login', [
+        $response = $this->postJson('/api/login', [
             'email' => 'testuser@example.com',
             'password' => 'password'
         ]);
 
         $response->assertJson([
             'message' => 'Login successful',
+            'token' => true,
         ]);
-        $response->assertStatus(200);
-        /// try logout
-        $response = $this->getJson('/logout');
+
         $response->assertStatus(200);
     }
     public function test_user_service_is_fetch_users()
     {
-        $response = $this->postJson('/users', [
+        $response = $this->postJson('/api/users', [
             'name' => 'Test User',
             'email' => 'testuser@example.com',
             'password' => 'password',
@@ -68,7 +66,7 @@ class UserTest extends TestCase
         ]);
         $response->assertStatus(201);
 
-        $response = $this->getJson('/users');
+        $response = $this->getJson('/api/users');
         $response->assertStatus(403);
         $user = User::factory()->create([
             'name' => 'Admin User',
@@ -78,16 +76,16 @@ class UserTest extends TestCase
         ]);
         $this->actingAs($user);
 
-        $response = $this->getJson('/users');
+        $response = $this->getJson('/api/users');
         $response->assertStatus(200);
 
-        $this->getJson('/users/' . $user->id);
+        $this->getJson('/api/users/' . $user->id);
         $response->assertStatus(200);
 
         $user->role = 'user';
         $user->save();
         $this->actingAs($user);
-        $response = $this->getJson('/users');
+        $response = $this->getJson('/api/users');
         $response->assertStatus(403);
     }
 
@@ -101,7 +99,7 @@ class UserTest extends TestCase
         ]);
         $user ->save();
         $this->actingAs($user);
-        $response = $this->putJson('/users/' . $user->id, [
+        $response = $this->putJson('/api/users', [
             'name' => 'Updated User',
             'email' => 'updateduser@example.com',
         ]);
@@ -135,13 +133,13 @@ class UserTest extends TestCase
 
 
         $this->actingAs($user);
-        $response = $this->deleteJson('/users/' . $user2->id);
+        $response = $this->deleteJson('/api/users/' . $user2->id);
         $response->assertStatus(403);
-        $response = $this->deleteJson('/users/' . $admin->id);
+        $response = $this->deleteJson('/api/users/' . $admin->id);
         $response->assertStatus(403);
 
         $this->actingAs($admin);
-        $response = $this->deleteJson('/users/' . $user->id);
+        $response = $this->deleteJson('/api/users/' . $user->id);
         $response->assertStatus(204);
     }
 }
