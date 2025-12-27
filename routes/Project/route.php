@@ -6,3 +6,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::apiResource('projects', ProjectController::class)
     ->middleware('auth:sanctum');
+Route::put('/projects/{ProjectId}/completed',[ProjectController::class,'setAsComplete']);

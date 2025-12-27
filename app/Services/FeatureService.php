@@ -2,34 +2,60 @@
 
 namespace App\Services;
 
+use App\Events\ErrorLogs;
+use App\Exceptions\ResponceException;
 use App\Models\Feature;
 use App\Events\FeatureCreated;
-use App\Events\CompleteFeature;
+use App\Models\Member;
+use App\Models\Project;
+use Exception;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class FeatureService
 {
+    use AuthorizesRequests;
     /**
      * Get all features.
      */
-    public function all()
+    public function all($projectId)
     {
-        return Feature::all();
+        $project = Project::findOrFail($projectId);
+        $this->authorize('viewAny', [Feature::class, $project]);
+        try {
+            $features = $project->features()->get();
+        } catch (Exception $e) {
+            event(new ErrorLogs($e));
+            throw $e;
+        }
+        return $features;
     }
 
     /**
      * Get a feature by ID.
      */
-    public function find(int $id): ?Feature
+    public function find(Feature $feature): ?Feature
     {
-        return Feature::find($id);
+        $this->authorize('view', $feature);
+        return $feature;
     }
 
     /**
      * Create a new feature.
      */
-    public function create(array $data): Feature
+    public function create(Request $request, Project $project): Feature
     {
-        $feature = Feature::create($data);
+        $this->authorize('create', [Feature::class,$project]);
+
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'details' => 'nullable|string'
+        ]);
+
+        $feature = new Feature($validatedData);
+        $feature->project_id = $project->id;
+        $feature->save();
 
         event(new FeatureCreated($feature));
 
@@ -39,38 +65,37 @@ class FeatureService
     /**
      * Update an existing feature.
      */
-    public function update(Feature $feature, array $data): Feature
+    public function update(Request $request, Feature $feature): Feature
     {
-        $feature->update($data);
+        $this->authorize('update', $feature);
 
+        $validatedData = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'details' => 'sometimes|string',
+            'status' => 'sometimes|in:completed',
+        ]);
+
+        if (empty($validatedData))
+            throw new ResponceException("No data provided for update", 400);
+
+        $feature->update($validatedData);
         return $feature;
     }
 
     /**
      * Delete a feature.
      */
-    public function delete(Feature $feature): bool
+    public function delete(Feature $feature): void
     {
-        return $feature->delete();
-    }
-
-    /**
-     * Mark a feature as complete.
-     */
-    public function complete(Feature $feature): Feature
-    {
-        $feature->update(['completed' => true, 'completed_at' => now()]);
-
-        event(new CompleteFeature($feature));
-
-        return $feature;
-    }
-
-    /**
-     * Get features for a specific project.
-     */
-    public function getFeaturesForProject(int $projectId)
-    {
-        return Feature::where('project_id', $projectId)->get();
+        $this->authorize('delete', $feature);
+        try {
+            $feature->delete();
+        } catch (Exception $e) {
+            event(new ErrorLogs($e));
+            throw new ResponceException(
+                "unknown problem when deleting feature",
+                500,
+            );
+        }
     }
 }

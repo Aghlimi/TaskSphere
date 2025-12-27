@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('members', function (Blueprint $table) {
             $table->id();
-            $table->string('role')->default('member');
+            $table->enum('role',['owner','admin','member'])->default('member');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('project_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

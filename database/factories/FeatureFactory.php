@@ -19,7 +19,7 @@ class FeatureFactory extends Factory
         return [
             'title' => $this->faker->sentence,
             'details' => $this->faker->paragraph,
-            'status' => 'incomplete',
+            'status' => 'pending',
             'project_id' => \App\Models\Project::factory(),
         ];
     }

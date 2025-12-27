@@ -19,9 +19,7 @@ class UserService
 
     public function all(): Collection
     {
-        Log::info("Fetching all users");
         $this->authorize("viewAny", User::class);
-        Log::info("Authorization successful for viewing all users");
         try {
             return User::all();
         } catch (\Exception $e) {
@@ -32,15 +30,12 @@ class UserService
 
     public function find(int $id)
     {
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json(["message" => "user not found",], 404);
-        }
+        $user = User::findOrFail($id);
 
         $this->authorize("view", [User::class, $user]);
 
         try {
-            return User::find($id);
+            return $user;
         } catch (\Exception $e) {
             event(new ErrorLogs($e));
             throw new ResponceException("user not found", 500);

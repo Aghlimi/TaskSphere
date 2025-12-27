@@ -5,6 +5,7 @@ namespace Tests\Feature;
 // use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -13,7 +14,7 @@ class UserTest extends TestCase
     /**
      * A basic test example.
      */
-    public function test_user_service_is_create_user(): void
+    public function test_user_service_create_valid_user(): void
     {
         $response = $this->postJson('/api/users', [
             'name' => 'Test User',
@@ -26,6 +27,10 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'testuser@example.com',
         ]);
+    }
+
+    public function test_user_service_create_invalid_user(): void
+    {
         $response = $this->postJson('/api/users', [
             'email' => 'Test User',
             'name' => 'rfeed',
@@ -56,7 +61,8 @@ class UserTest extends TestCase
 
         $response->assertStatus(200);
     }
-    public function test_user_service_is_fetch_users()
+
+    public function test_user_service_is_fetch_users_with_user(): void
     {
         $response = $this->postJson('/api/users', [
             'name' => 'Test User',
@@ -68,6 +74,17 @@ class UserTest extends TestCase
 
         $response = $this->getJson('/api/users');
         $response->assertStatus(403);
+    }
+
+    public function test_user_service_is_fetch_users_with_admin_role(): void
+    {
+        $response = $this->postJson('/api/users', [
+            'name' => 'Test User',
+            'email' => 'testuser@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
         $user = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'adminuser@example.com',
@@ -78,13 +95,47 @@ class UserTest extends TestCase
 
         $response = $this->getJson('/api/users');
         $response->assertStatus(200);
+    }
 
-        $this->getJson('/api/users/' . $user->id);
-        $response->assertStatus(200);
+    public function test_user_service_is_fetch_single_user()
+    {
+        $response = $this->postJson('/api/users', [
+            'name' => 'Test User',
+            'email' => 'testuser@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
 
-        $user->role = 'user';
-        $user->save();
+        $user = User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'adminuser@example.com',
+            'role' => 'admin',
+            'password' => bcrypt('password'),
+        ]);
         $this->actingAs($user);
+
+
+        $response = $this->getJson('/api/users/1');
+        $response->assertStatus(200);
+    }
+
+    public function test_user_service_is_fetch_users_with_user_role()
+    {
+        $response = $this->postJson('/api/users', [
+            'name' => 'Test User',
+            'email' => 'testuser@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $user = User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'adminuser@example.com',
+            'role' => 'user',
+            'password' => bcrypt('password'),
+        ]);
+        $this->actingAs($user);
+
         $response = $this->getJson('/api/users');
         $response->assertStatus(403);
     }
@@ -97,7 +148,7 @@ class UserTest extends TestCase
             'role' => 'user',
             'password' => bcrypt('password'),
         ]);
-        $user ->save();
+        $user->save();
         $this->actingAs($user);
         $response = $this->putJson('/api/users', [
             'name' => 'Updated User',

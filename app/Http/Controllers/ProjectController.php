@@ -6,7 +6,6 @@ use App\Exceptions\ResponceException;
 use App\Models\Project;
 use App\Services\ProjectService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class ProjectController extends Controller
 {
@@ -41,6 +40,7 @@ class ProjectController extends Controller
     {
         try {
             $project = $this->projectService->create($request);
+            event(new \App\Events\ProjectCreated($project));
             return response()->json($project, 201);
         } catch (ResponceException $e) {
             return response()->json(
@@ -89,6 +89,20 @@ class ProjectController extends Controller
     {
         try {
             $this->projectService->update($project, $request->all());
+            return response()->json($project, 200);
+        } catch (ResponceException $e) {
+            return response()->json(
+                ["message" => $e->getMessage()],
+                $e->statusCode ?: 500,
+            );
+        }
+    }
+    
+    public function setAsComplete($projectId)
+    {
+        $project = Project::findOrFail($projectId);
+        try {
+            $this->projectService->setAsComplete($project);
             return response()->json($project, 200);
         } catch (ResponceException $e) {
             return response()->json(

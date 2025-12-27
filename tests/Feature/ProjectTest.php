@@ -21,7 +21,7 @@ class ProjectTest extends TestCase
             'title' => 'Test Project',
             'description' => 'A test project',
             'start_date' => now()->toDateString(),
-            'end_date' => now()->addDay()->toDateString(),
+            'completed_at' => now()->addDay()->toDateString(),
         ]);
 
         $response->assertStatus(201);
@@ -72,30 +72,38 @@ class ProjectTest extends TestCase
         $response->assertStatus(403);
         $member->role = 'owner';
         $member->save();
+        $time = now()->toDateTimeString();
         $response = $this->putJson('/api/projects/' . $project->id, [
             'title' => 'Updated Project',
+            'completed_at' => $time,
         ]);
         $response->assertStatus(200);
-        $this->assertDatabaseHas('projects', ['title' => 'Updated Project']);
+        $this->assertDatabaseHas('projects', ['title' => 'Updated Project', 'completed_at' => $time]);
     }
 
     public function test_project_can_be_deleted()
     {
+        // Create a user and a project
         $user = User::factory()->create();
-        $this->actingAs($user);
-
         $project = Project::factory()->create();
+
+        // Attempt to delete the project without being a member
+        $this->actingAs($user);
 
         $response = $this->deleteJson('/api/projects/' . $project->id);
         $response->assertStatus(403);
 
+        // Add the user as a member with 'member' role
         $member = Member::factory()->create([
             'user_id' => $user->id,
             'project_id' => $project->id,
             'role' => 'member',
         ]);
+
         $response = $this->deleteJson('/api/projects/' . $project->id);
         $response->assertStatus(403);
+
+        // Change the member's role to 'owner' and attempt deletion again
         $member->role = 'owner';
         $member->save();
         $response = $this->deleteJson('/api/projects/' . $project->id);

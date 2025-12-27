@@ -12,8 +12,6 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        // Log::info('UserPolicy@viewAny called for user id: ' . $user->id);
-        // return true;
         return $user->role === 'admin';
     }
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('details')->nullable();
-            $table->string('status')->default('incomplete');
+            $table->enum('status', ['pending', 'completed'])->default('pending');
             $table->unsignedBigInteger('project_id');
             $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
             $table->timestamps();

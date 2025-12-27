@@ -19,8 +19,6 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        Log::info($request->user());
-
         try {
             return response()->json($this->userService->all());
         } catch (ResponceException $e) {

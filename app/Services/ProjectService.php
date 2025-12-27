@@ -68,15 +68,14 @@ class ProjectService
             "title",
             "description",
             "start_date",
-            "end_date",
+            "completed_at",
         );
-        Log::info($data);
 
         $validatedData = validator($data, [
             "title" => "required|string|max:255",
             "description" => "nullable|string",
             "start_date" => "nullable|date",
-            "end_date" => "nullable|date|after_or_equal:start_date",
+            "completed_at" => "nullable|date|after_or_equal:start_date",
         ])->validate();
 
         try {
@@ -84,7 +83,7 @@ class ProjectService
                 "title" => $validatedData["title"],
                 "description" => $validatedData["description"] ?? null,
                 "start_date" => $validatedData["start_date"] ?? null,
-                "end_date" => $validatedData["end_date"] ?? null,
+                "completed_at" => $validatedData["completed_at"] ?? null,
             ]);
             Member::create([
                 "user_id" => $request->user()->id,
@@ -94,7 +93,6 @@ class ProjectService
             event(new ProjectCreated($project));
             return $project;
         } catch (\Exception $e) {
-            Log::info($e->getMessage());
             event(new ErrorLogs($e));
             throw new ResponceException(
                 "unknow problem when create project",
@@ -109,12 +107,14 @@ class ProjectService
     public function update(Project $project, array $data): Project
     {
         $this->authorize("update", [Project::class, $project]);
+
         $validatedData = validator($data, [
             "title" => "sometimes|required|string|max:255",
             "description" => "sometimes|nullable|string",
             "start_date" => "sometimes|nullable|date",
-            "end_date" => "sometimes|nullable|date|after_or_equal:start_date",
+            "completed_at" => "sometimes|nullable|date|after_or_equal:start_date",
         ])->validate();
+
         try {
             $project->update($validatedData);
             return $project;
@@ -152,15 +152,17 @@ class ProjectService
         $this->authorize("seeUserProjects", Project::class);
         try {
             $user = User::find($userId)->with("projects")->get();
-            return $user->projects->select(
-                "id",
-                "name",
-                "description",
-                "start_date",
-                "end_date",
-                "created_at",
-                "updated_at",
-            )->toArray();
+            return $user->projects
+                ->select(
+                    "id",
+                    "name",
+                    "description",
+                    "start_date",
+                    "completed_at",
+                    "created_at",
+                    "updated_at",
+                )
+                ->toArray();
         } catch (\Exception $e) {
             event(new ErrorLogs($e));
             throw new ResponceException(
@@ -169,9 +171,18 @@ class ProjectService
             );
         }
     }
+    public function setAsComplete(Project $project): Project
+    {
+        $this->authorize("complete", [Project::class, $project]);
+        try {
+            $project->update([
+                "status" => "completed",
+                "completed_at" => now(),
+            ]);
+            return $project;
+        } catch (\Exception $e) {
+            event(new ErrorLogs($e));
+            throw new ResponceException("unknow problem when complete project",500);
+        }
+    }
 }
-
-
-// "vite": "^6.0.0",
-// "@vitejs/plugin-vue": "^5.2.4",
-// "vue": "^3.4.0"
