@@ -2,21 +2,21 @@
 
 namespace App\Providers;
 
-use App\Models\User;
-use App\Policies\UserPolicy;
-use App\Services\UserService;
+use App\Models\Project;
+use App\Policies\ProjectPolicy;
+use App\Services\ProjectService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
-class UserProvider extends ServiceProvider
+class ProjectProvider extends ServiceProvider
 {
     /**
      * Register services.
      */
     public function register(): void
     {
-        $this->app->singleton('UserService', function ($app) {
-            return new UserService();
+        $this->app->singleton('ProjectService',function($app){
+            return new ProjectService();
         });
     }
 
@@ -25,6 +25,6 @@ class UserProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Project::class,ProjectPolicy::class);
     }
 }

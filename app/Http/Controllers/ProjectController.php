@@ -2,25 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ResponceException;
 use App\Models\Project;
+use App\Services\ProjectService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProjectController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+
+    private $projectService;
+
+    public function __construct(ProjectService $projectService)
     {
-        //
+        $this->projectService = $projectService;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index()
     {
-        //
+        try {
+            $projects = $this->projectService->all();
+            return response()->json($projects, 200);
+        } catch (ResponceException $e) {
+            return response()->json(
+                ["message" => $e->getMessage()],
+                $e->statusCode ?: 500,
+            );
+        }
     }
 
     /**
@@ -28,23 +39,47 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            $project = $this->projectService->create($request);
+            return response()->json($project, 201);
+        } catch (ResponceException $e) {
+            return response()->json(
+                ["message" => $e->getMessage()],
+                $e->statusCode,
+            );
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Project $project)
+    public function show($id)
     {
-        //
+        try {
+            $project = $this->projectService->find((int) $id);
+            if (!$project) {
+                return response()->json(["message" => "Project not found"], 404);
+            }
+            return response()->json($project, 200);
+        } catch (ResponceException $e) {
+            return response()->json(["message" => $e->getMessage()], $e->statusCode ?: 500);
+        }
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Project $project)
+    public function edit(Request $request, Project $project)
     {
-        //
+        try {
+            $this->projectService->update($project, $request->all());
+            return response()->json($project, 200);
+        } catch (ResponceException $e) {
+            return response()->json(
+                ["message" => $e->getMessage()],
+                $e->statusCode ?: 500,
+            );
+        }
     }
 
     /**
@@ -52,7 +87,15 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
-        //
+        try {
+            $this->projectService->update($project, $request->all());
+            return response()->json($project, 200);
+        } catch (ResponceException $e) {
+            return response()->json(
+                ["message" => $e->getMessage()],
+                $e->statusCode ?: 500,
+            );
+        }
     }
 
     /**
@@ -60,6 +103,14 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
-        //
+        try {
+            $this->projectService->delete($project);
+            return response()->json(null, 204);
+        } catch (ResponceException $e) {
+            return response()->json(
+                ["message" => $e->getMessage()],
+                $e->statusCode ?: 500,
+            );
+        }
     }
 }

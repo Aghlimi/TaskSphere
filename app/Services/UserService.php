@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\Log;
 class UserService
 {
     use AuthorizesRequests;
-    /**
-     * Get all users.
-     */
+
     public function all(): Collection
     {
         Log::info("Fetching all users");
@@ -32,9 +30,6 @@ class UserService
         }
     }
 
-    /**
-     * Get a user by ID.
-     */
     public function find(int $id)
     {
         $user = User::find($id);
@@ -52,20 +47,15 @@ class UserService
         }
     }
 
-    /**
-     * Create a new user.
-     */
-
     public function create(array $data)
     {
-
         $dataValidated = validator($data, [
             "name" => "required|string|max:255",
             "email" => "required|string|email|max:255|unique:users",
             "password" => "required|string|min:8|confirmed",
         ])->validate();
 
-        // $dataValidated["password"] = Hash::make($dataValidated["password"]);
+        $dataValidated["password"] = Hash::make($dataValidated["password"]);
         try {
             $user = User::create($dataValidated);
             event(new UserCreated($user));
@@ -78,37 +68,28 @@ class UserService
     public function login(Request $reuqest)
     {
         $data = $reuqest->only("email", "password");
+
         $data = validator($data, [
             "email" => "required|email",
             "password" => "required",
         ])->validate();
-        $user = (function () use ($data) {
-            try {
-                return User::where("email", $data["email"])->first();
-            } catch (\Exception $e) {
-                event(new ErrorLogs($e));
-                throw new ResponceException("fail to check the user", 422);
-            }
-        })();
+
+        $user = User::where("email", $data["email"])->first();
 
         if (!$user || !Hash::check($data["password"], $user->password)) {
-            throw new ResponceException(
-                "The provided credentials are incorrect.",
-                401,
-            );
+            return response()->json([
+                "message" => "The provided credentials are incorrect.",
+            ], 401);
         }
 
         Auth::login($user);
 
-        $reuqest->session()->regenerate();
+        // $reuqest->session()->regenerate();
 
         return response()->json([
             "message" => "Login successful",
         ]);
     }
-    /**
-     * Update an existing user.
-     */
 
     public function update(User $user, array $data)
     {
@@ -137,9 +118,6 @@ class UserService
         }
     }
 
-    /**
-     * Delete a user.
-     */
     public function delete(User $user)
     {
         $this->authorize("delete", $user);
