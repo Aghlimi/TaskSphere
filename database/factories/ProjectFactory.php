@@ -18,11 +18,7 @@ class ProjectFactory extends Factory
     {
         return [
             'title' => $this->faker->sentence,
-            'description' => $this->faker->paragraph,
-            'status' => 'pending',
-            'start_date' => $this->faker->date(),
-            'completed_at' => $this->faker->date(),
-
+            'description' => $this->faker->paragraph
         ];
     }
 }
