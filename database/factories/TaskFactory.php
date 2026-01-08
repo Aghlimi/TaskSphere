@@ -19,9 +19,7 @@ class TaskFactory extends Factory
         return [
             'title' => $this->faker->sentence,
             'description' => $this->faker->paragraph,
-            'status' => 'pending',
             'feature_id' => \App\Models\Feature::factory(),
-            'due_date' => $this->faker->date(),
         ];
     }
 }

@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->string('status')->default('pending');
+            $table->enum('status',['pending', 'completed'])->default('pending');
             $table->unsignedBigInteger('feature_id');
-            $table->date('due_date')->nullable();
+            $table->date('completed_at')->nullable();
             $table->foreign('feature_id')->references('id')->on('features')->onDelete('cascade');
             $table->timestamps();
         });
