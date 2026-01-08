@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\ResponceException;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -17,68 +17,57 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    public function index(Request $request)
+    public function index()
     {
-        try {
-            return response()->json($this->userService->all());
-        } catch (ResponceException $e) {
-            return response()->json(["message" => $e->getMessage()], $e->statusCode);
-        }
+        $users = $this->userService->all();
+        return response()->json($users, 200);
     }
 
-    public function showLoginForm()
+    public function login(LoginRequest $request)
     {
-        return view("users.login");
+        $data = $request->validated();
+
+        $token = $this->userService->login($data);
+
+        return response()->json(['token' => $token], 200);
     }
 
-    public function login(Request $request)
+    public function store(UserRequest $request)
     {
-        try {
-            return $this->userService->login($request);
-        } catch (ResponceException $e) {
-            return response()->json(["message" => $e->getMessage()], $e->statusCode);
-        }
+        $data = $request->validated();
+
+        $this->userService->create($data);
+
+        return response()->json(["message" => "User created successfully"], 201);
     }
 
-    public function create(Request $request)
+    public function show(User $user)
     {
-        return view("users.create");
+        return $this->userService->find($user);
     }
 
-    public function store(Request $request)
+    public function edit(UserRequest $request)
     {
-        try {
-            $this->userService->create($request->only("name", "email", "password", "password_confirmation"));
-            return response()->json(["message" => "User created successfully"], 201);
-        } catch (ResponceException $e) {
-            return response()->json(["message" => $e->getMessage()], $e->statusCode);
-        }
-    }
+        $data = $request->validated();
 
-    public function show(string $id)
-    {
-        return $this->userService->find((int) $id);
-    }
+        $this->userService->update($request->user(), $data);
 
-    public function edit(Request $request)
-    {
-        $this->userService->update($request->user(), $request->all());
         return response()->json([
             "message" => "User updated successfully",
         ]);
     }
 
-    public function update(Request $request)
+    public function update(UserRequest $request)
     {
-        $this->userService->update($request->user(), $request->all());
-        return response()->json([
-            "message" => "User updated successfully",
-        ]);
+        $data = $request->validated();
+
+        $this->userService->update($request->user(), $data);
+
+        return response()->json(["message" => "User updated"]);
     }
 
-    public function destroy(string $id)
+    public function destroy(User $user)
     {
-        $user = User::find((int) $id);
         $this->userService->delete($user);
         return response()->json(["message" => "User deleted successfully"], 204);
     }
