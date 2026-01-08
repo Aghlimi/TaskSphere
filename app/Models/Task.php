@@ -19,7 +19,7 @@ class Task extends Model
     protected $fillable = [
         'feature_id',
         'assigned_to',
-        'name',
+        'title',
         'description',
         'status',
         'priority',
@@ -53,5 +53,10 @@ class Task extends Model
     public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function invitable()
+    {
+        return $this->morphMany(Invitation::class, 'invitable');
     }
 }

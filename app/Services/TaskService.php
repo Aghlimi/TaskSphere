@@ -2,83 +2,72 @@
 
 namespace App\Services;
 
+use App\Models\Feature;
 use App\Models\Task;
 use App\Events\TaskCreated;
 use App\Events\CompleteTask;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Log;
 
 class TaskService
 {
-    /**
-     * Get all tasks.
-     */
-    public function all()
+    use AuthorizesRequests;
+
+    public function all(Feature $feature): Collection|null
     {
-        return Task::all();
+        $this->authorize('viewAny', [Task::class, $feature]);
+
+        return $feature->tasks()
+            ->select('created_at', 'status', 'id', 'title', 'description')
+            ->get();
     }
 
-    /**
-     * Get a task by ID.
-     */
     public function find(int $id): ?Task
     {
-        return Task::find($id);
+        $task = Task::find($id)->first();
+        if (!$task)
+            return null;
+
+        $this->authorize('view', $task);
+
+        return $task;
     }
 
-    /**
-     * Create a new task.
-     */
-    public function create(array $data): Task
+    public function create(array $data, Feature $feature): Task
     {
-        $task = Task::create($data);
+        $this->authorize('create', [Task::class, $feature]);
+
+        $task = Task::create([
+            ...$data,
+            'feature_id' => $feature->first('id')->id
+        ]);
 
         event(new TaskCreated($task));
 
         return $task;
     }
 
-    /**
-     * Update an existing task.
-     */
     public function update(Task $task, array $data): Task
     {
+        $this->authorize('update', $task);
+
         $task->update($data);
 
         return $task;
     }
 
-    /**
-     * Delete a task.
-     */
-    public function delete(Task $task): bool
+    public function delete(Task $task): void
     {
-        return $task->delete();
+        $this->authorize('delete', $task);
+        $task->delete();
     }
 
-    /**
-     * Mark a task as complete.
-     */
-    public function complete(Task $task): Task
+    public function getTasksForUser(User $user): Collection
     {
-        $task->update(['completed' => true, 'completed_at' => now()]);
-
-        event(new CompleteTask($task));
-
-        return $task;
-    }
-
-    /**
-     * Get tasks for a specific feature.
-     */
-    public function getTasksForFeature(int $featureId)
-    {
-        return Task::where('feature_id', $featureId)->get();
-    }
-
-    /**
-     * Get tasks assigned to a specific user.
-     */
-    public function getTasksForUser(int $userId)
-    {
-        return Task::where('assigned_to', $userId)->get();
+        return $user->tasks()
+            ->select('id', 'title', 'status', 'created_at')
+            ->get();
     }
 }
