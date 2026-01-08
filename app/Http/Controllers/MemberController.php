@@ -2,64 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Member;
+use App\Models\Invitation;
+use App\Models\Project;
+use App\Models\User;
+use App\Services\MemberService;
 use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(public MemberService $memberService)
     {
-        //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function listMembers(Project $project)
     {
-        //
+        return $this->memberService->showMembers($project);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function invite(Project $project, User $user)
     {
-        //
+        $this->memberService->invite($project, $user);
+        return response()->json(null, 200);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Member $member)
+    public function accept(Invitation $inv)
     {
-        //
+        $this->memberService->accept($inv);
+        return response()->json(null, 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Member $member)
+    public function reject(Invitation $inv)
     {
-        //
+        $this->memberService->accept($inv);
+        return response()->json(null, 200);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Member $member)
+    public function delete(Project $project, User $user)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Member $member)
-    {
-        //
+        $this->memberService->delete($project, $user);
+        return response()->json(null, 204);
     }
 }
