@@ -87,7 +87,7 @@ class FeatureTest extends TestCase
         $this->actingAs($this->admin);
         $feature = Feature::factory()->create(['project_id' => $this->project->id]);
         $data = ['title' => 'Updated Title'];
-        $response = $this->putJson("/api/features/{$feature->id}", $data);
+        $response = $this->putJson("/api/projects/{$this->project->id}/features/{$feature->id}", $data);
         $response->assertStatus(200);
         $this->assertDatabaseHas('features', ['id' => $feature->id, 'title' => 'Updated Title']);
     }
@@ -97,7 +97,7 @@ class FeatureTest extends TestCase
         $this->actingAs($this->user);
         $feature = Feature::factory()->create(['project_id' => $this->project->id]);
         $data = ['title' => 'Should Not Update'];
-        $response = $this->putJson("/api/features/{$feature->id}", $data);
+        $response = $this->putJson("/api/projects/{$this->project->id}/features/{$feature->id}", $data);
         $response->assertStatus(403);
     }
 
@@ -105,7 +105,7 @@ class FeatureTest extends TestCase
     {
         $this->actingAs($this->admin);
         $feature = Feature::factory()->create(['project_id' => $this->project->id]);
-        $response = $this->deleteJson("/api/features/{$feature->id}");
+        $response = $this->deleteJson("/api/projects/{$this->project->id}/features/{$feature->id}");
         $response->assertStatus(204);
         $this->assertDatabaseMissing('features', ['id' => $feature->id]);
     }
@@ -114,7 +114,7 @@ class FeatureTest extends TestCase
     {
         $this->actingAs($this->user);
         $feature = Feature::factory()->create(['project_id' => $this->project->id]);
-        $response = $this->deleteJson("/api/features/{$feature->id}");
+        $response = $this->deleteJson("/api/projects/{$this->project->id}/features/{$feature->id}");
         $response->assertStatus(403);
     }
 
@@ -122,10 +122,10 @@ class FeatureTest extends TestCase
     {
         $feature = Feature::factory()->create(['project_id' => $this->project->id]);
         $this->actingAs($this->admin);
-        $response = $this->getJson("/api/features/{$feature->id}");
+        $response = $this->getJson("/api/projects/{$this->project->id}/features/{$feature->id}");
         $response->assertStatus(200);
         $this->actingAs($this->user);
-        $response = $this->getJson("/api/features/{$feature->id}");
+        $response = $this->getJson("/api/projects/{$this->project->id}/features/{$feature->id}");
         $response->assertStatus(200);
     }
 
@@ -134,7 +134,7 @@ class FeatureTest extends TestCase
         $feature = Feature::factory()->create(['project_id' => $this->project->id]);
         $otherUser = User::factory()->create();
         $this->actingAs($otherUser);
-        $response = $this->getJson("/api/features/{$feature->id}");
+        $response = $this->getJson("/api/projects/{$this->project->id}/features/{$feature->id}");
         $response->assertStatus(403);
     }
 
@@ -153,7 +153,7 @@ class FeatureTest extends TestCase
     {
         $this->actingAs($this->admin);
         $feature = Feature::factory()->create(['project_id' => $this->project->id]);
-        $response = $this->putJson("/api/features/{$feature->id}", []);
+        $response = $this->putJson("/api/projects/{$this->project->id}/features/{$feature->id}", []);
         $response->assertStatus(400);
     }
 }
