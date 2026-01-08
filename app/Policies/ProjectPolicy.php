@@ -5,16 +5,15 @@ namespace App\Policies;
 use App\Models\Member;
 use App\Models\Project;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
 
 class ProjectPolicy
 {
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(User $user, User $target): bool
     {
-        return $user->role === "admin";
+        return $target->id === $user->id || $user->role === "admin";
     }
 
     /**
@@ -22,10 +21,8 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        $access = Member::where("user_id", $user->id)
-            ->where("project_id", $project->id)
-            ->first();
-        return !!$access || $user->role === "admin";
+        $access = $project->members()->wherePivot('user_id', '=', $user->id)->exists();
+        return $access || $user->role === "admin";
     }
 
     /**
@@ -41,10 +38,9 @@ class ProjectPolicy
      */
     public function update(User $user, Project $project): bool
     {
-        Log::info($user);
-        $access = Member::where("user_id", $user->id)
-            ->where("project_id", $project->id)
-            ->where("role",'=', "owner")
+        $access = $project->members()
+            ->wherePivot('user_id', '=', $user->id)
+            ->wherePivot('role', 'owner')
             ->exists();
         return $access || $user->role === "admin";
     }
@@ -54,21 +50,9 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project): bool
     {
-        return $user->role === "admin" || Member::where("user_id", $user->id)
-            ->where("project_id", $project->id)
-            ->where("role", "owner")
+        return $user->role === "admin" || $project->members()
+            ->wherePivot('user_id', '=', $user->id)
+            ->wherePivot('role', 'owner')
             ->exists();
-    }
-
-    public function seeUserProjects(User $user, User $target): bool
-    {
-        return $target->id === $user->id || $user->role === "admin";
-    }
-    public function complete(User $user, Project $project): bool
-    {
-        return Member::where("user_id", $user->id)
-            ->where("project_id", $project->id)
-            ->where("role", "owner")
-            ->exists() || $user->role === "admin";
     }
 }
