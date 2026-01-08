@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Feature;
 use App\Policies\FeaturePolicy;
+use App\Services\FeatureService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -16,7 +17,7 @@ class FeatureProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton('FeatureService', function ($app) {
-            return new \App\Services\FeatureService();
+            return new FeatureService();
         });
     }
 

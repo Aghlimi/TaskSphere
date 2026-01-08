@@ -2,16 +2,10 @@
 
 namespace App\Services;
 
-use App\Events\ErrorLogs;
-use App\Exceptions\ResponceException;
 use App\Models\Feature;
 use App\Events\FeatureCreated;
-use App\Models\Member;
 use App\Models\Project;
-use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class FeatureService
 {
@@ -19,17 +13,10 @@ class FeatureService
     /**
      * Get all features.
      */
-    public function all($projectId)
+    public function all(Project $project)
     {
-        $project = Project::findOrFail($projectId);
         $this->authorize('viewAny', [Feature::class, $project]);
-        try {
-            $features = $project->features()->get();
-        } catch (Exception $e) {
-            event(new ErrorLogs($e));
-            throw $e;
-        }
-        return $features;
+        return $project->features()->get();
     }
 
     /**
@@ -44,16 +31,11 @@ class FeatureService
     /**
      * Create a new feature.
      */
-    public function create(Request $request, Project $project): Feature
+    public function create(array $data, Project $project): Feature
     {
-        $this->authorize('create', [Feature::class,$project]);
+        $this->authorize('create', [Feature::class, $project]);
 
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'details' => 'nullable|string'
-        ]);
-
-        $feature = new Feature($validatedData);
+        $feature = new Feature($data);
         $feature->project_id = $project->id;
         $feature->save();
 
@@ -65,20 +47,12 @@ class FeatureService
     /**
      * Update an existing feature.
      */
-    public function update(Request $request, Feature $feature): Feature
+    public function update(array $data, Feature $feature): Feature
     {
         $this->authorize('update', $feature);
 
-        $validatedData = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'details' => 'sometimes|string',
-            'status' => 'sometimes|in:completed',
-        ]);
+        $feature->update($data);
 
-        if (empty($validatedData))
-            throw new ResponceException("No data provided for update", 400);
-
-        $feature->update($validatedData);
         return $feature;
     }
 
@@ -88,14 +62,6 @@ class FeatureService
     public function delete(Feature $feature): void
     {
         $this->authorize('delete', $feature);
-        try {
-            $feature->delete();
-        } catch (Exception $e) {
-            event(new ErrorLogs($e));
-            throw new ResponceException(
-                "unknown problem when deleting feature",
-                500,
-            );
-        }
+        $feature->delete();
     }
 }

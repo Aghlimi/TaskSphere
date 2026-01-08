@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\ResponceException;
+use App\Http\Requests\FeatureRequest;
 use App\Models\Feature;
 use App\Models\Project;
 use App\Services\FeatureService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class FeatureController extends Controller
 {
@@ -20,72 +18,63 @@ class FeatureController extends Controller
         $this->featureService = $featureService;
     }
 
-    public function index($projectId)
+    public function index(Project $project)
     {
-        try {
-            $features = $this->featureService->all($projectId);
-            return response()->json($features, 200);
-        } catch (ResponceException $e) {
-
-            return response()->json(
-                ["message" => $e->getMessage()],
-                $e->statusCode ?: 500,
-            );
-        }
+        $features = $this->featureService->all($project);
+        return response()->json($features, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request,$projectId)
+    public function store(FeatureRequest $request, Project $project)
     {
-        $project = Project::findOrFail($projectId);
-        try {
-            $feature = $this->featureService->create($request,$project);
-            return response()->json($feature, 201);
-        } catch (ResponceException $e) {
-            return response()->json(
-                ["message" => $e->getMessage()],
-                $e->statusCode ?: 500,
-            );
-        }
+        $data = $request->validated();
+        $feature = $this->featureService->create($data, $project);
+        return response()->json($feature, 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Feature $feature)
+    public function show(Project $project,Feature $feature)
     {
-        return response()->json($this->featureService->find($feature), 200);
+        $feature = $this->featureService->find($feature);
+        return response()->json($feature, 200);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Request $request, Feature $feature)
+    public function edit(FeatureRequest $request, Feature $feature)
     {
-        try {
-            return response()->json($this->featureService->update($request, $feature), 200);
-        } catch (ResponceException $e) {
-            return response()->json(
-                ["message" => $e->getMessage()],
-                $e->statusCode ?: 500,
-            );
-        }
+        $data = $request->validated();
+
+        if (empty($data))
+            return response()->json(['message' => 'no data provided'], 400);
+
+        $feature = $this->featureService->update($data, $feature);
+        return response()->json($feature, 200);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Feature $feature)
+    public function update(FeatureRequest $request, Project $project, Feature $feature)
     {
-        return $this->edit($request, $feature);
+        $data = $request->validated();
+
+        if (empty($data))
+            return response()->json(['message' => 'no data provided'], 400);
+
+        $feature = $this->featureService->update($data, $feature);
+        return response()->json($feature, 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Feature $feature)
+    public function destroy(Project $project,Feature $feature)
     {
         $this->featureService->delete($feature);
         return response()->json(null, 204);
