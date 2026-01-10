@@ -29,7 +29,7 @@ class MemberService
     {
         $this->authorize('invite', [Member::class, $project]);
 
-        $inv = $project->invitable()->create(['user_id' => $user->id]);
+        $inv = $project->invitable()->create(['user_id' => $user->id, 'sender_id' => auth()->id()]);
 
         event(new InvitedToTeamEvent($inv));
     }
@@ -55,7 +55,7 @@ class MemberService
     {
         $this->authorize('reject', [Member::class, $inv]);
 
-        event(new MemberRejectedEvent($inv->invitable, auth()->id()));
+        event(new MemberRejectedEvent($inv));
 
         $inv->delete();
     }
@@ -64,7 +64,30 @@ class MemberService
     {
         $this->authorize('delete', [Member::class, $project, $user]);
         $project->members()
-            ->where('id', '=', $user->id)
+            ->where('users.id', '=', $user->id)
             ->delete();
+    }
+
+    public function setAdmin(Project $project, User $user)
+    {
+        $this->authorize('setAdmin', [Member::class, $project, $user]);
+        $project->members()
+            ->where('users.id', '=', $user->id)
+            ->update(['role' => 'admin']);
+    }
+
+    public function removeAdmin(Project $project, User $user)
+    {
+        $this->authorize('removeAdmin', [Member::class, $project]);
+        if($user->id == auth()->id()) 
+            return false;
+        Member::where('user_id', $user->id)->delete();
+        return true;
+    }
+    public function userRole(Project $project, User $user)
+    {
+        $this->authorize('userRole', [Member::class, $project]);
+        $role = $project->members()->where('id','=', $user->id)->select('id')->addSelect('role')->get();
+        return $role->role;
     }
 }

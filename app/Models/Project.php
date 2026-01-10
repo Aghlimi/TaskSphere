@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Project extends Model
+class Project extends Model 
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
     use HasFactory;
+
 
     /**
      * The attributes that are mass assignable.

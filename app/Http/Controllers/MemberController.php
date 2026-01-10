@@ -16,7 +16,8 @@ class MemberController extends Controller
 
     public function listMembers(Project $project)
     {
-        return $this->memberService->showMembers($project);
+        $members = $this->memberService->showMembers($project);
+        return response()->json($members,200);
     }
 
     public function invite(Project $project, User $user)
@@ -25,15 +26,15 @@ class MemberController extends Controller
         return response()->json(null, 200);
     }
 
-    public function accept(Invitation $inv)
+    public function accept($project,Invitation $inv)
     {
         $this->memberService->accept($inv);
         return response()->json(null, 200);
     }
 
-    public function reject(Invitation $inv)
+    public function reject($project,Invitation $inv)
     {
-        $this->memberService->accept($inv);
+        $this->memberService->reject($inv);
         return response()->json(null, 200);
     }
 
@@ -41,5 +42,23 @@ class MemberController extends Controller
     {
         $this->memberService->delete($project, $user);
         return response()->json(null, 204);
+    }
+
+    public function setAdmin(Project $project, User $user)
+    {
+        $this->memberService->setAdmin($project, $user);
+        return response()->json(null, 200);
+    }
+
+    public function removeAdmin(Project $project, User $user)
+    {
+        if ($this->memberService->removeAdmin($project, $user))
+            return response()->noContent();
+        return response()->json(['message' => 'you can\'t delete the owner'], 403);
+    }
+
+    public function UserRole(Project $project, User $user)
+    {
+        $this->memberService->userRole($project, $user);
     }
 }

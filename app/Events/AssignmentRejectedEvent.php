@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\Assign;
 use App\Models\Invitation;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -11,7 +12,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MemberRejectedEvent
+class AssignmentRejectedEvent
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

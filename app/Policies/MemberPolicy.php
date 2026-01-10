@@ -11,14 +11,21 @@ class MemberPolicy
     public function showMembers(User $user, Project $project)
     {
         return $project->members()
-            ->where('id', '=', $user->id)
+            ->where('users.id', '=', $user->id)
+            ->exists();
+    }
+
+    public function userRole(User $user, Project $project)
+    {
+        return $project->members()
+            ->where('users.id', '=', $user->id)
             ->exists();
     }
 
     public function invite(User $user, Project $project)
     {
         return $project->members()
-            ->where('id', '=', $user->id)
+            ->where('users.id', '=', $user->id)
             ->wherePivotIn('role', ['admin', 'owner'])
             ->exists();
     }
@@ -35,17 +42,30 @@ class MemberPolicy
 
     public function delete(User $user, Project $project, User $target)
     {
-        return $project->members()
-            ->whereIn('id', [$user->id, $target->id])
-            ->where(function ($q) use ($user, $target) {
-                $q->where(function ($q) use ($user) {
-                    $q->where('id', $user->id)
-                        ->wherePivotIn('role', ['admin', 'owner']);
-                })->orWhere(function ($q) use ($target) {
-                    $q->where('id', $target->id)
-                        ->wherePivotIn('role', ['admin', 'member']);
-                });
+        if ($target->id == $user->id)
+            return true;
+        $access = $project->members()->whereIn('users.id', [$user->id, $target->id])
+            ->whereIn('members.role', ['admin', 'owner'])
+            ->orWhere(function ($q) use ($target) {
+                $q->where('users.id', '=', $target->id)
+                    ->where('members.role', '=', 'member');
             })
-            ->count() === 2;
+            ->count();
+
+        return $access === 2;
+    }
+
+    public function setAdmin(User $user, Project $project)
+    {
+        return $project->members()
+            ->where('users.id', '=', $user->id)
+            ->wherePivot('role', 'owner')
+            ->exists();
+    }
+
+    public function removeAdmin(User $user, Project $project)
+    {
+        return $project->members()->where('users.id', '=', $user->id)
+            ->wherePivot('role', '=', 'owner')->exists();
     }
 }
