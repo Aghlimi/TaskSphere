@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Events\InvitedToTeamEvent;
-use App\Events\MemberAdded;
-use App\Events\MemberRejectedEvent;
+use App\Events\AssignmentAcceptedEvent;
+use App\Events\AssignmentRejectedEvent;
+use App\Events\AssignmentSendedEvent;
 use App\Models\Assign;
 use App\Models\Invitation;
-use App\Models\Member;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -22,17 +21,16 @@ class AssignService
     {
         $this->authorize('viewAssignees', [Assign::class, $project]);
         return $task->assignees()->select('name', 'email')
-            ->addSelect('assigns.role')
             ->get();
     }
 
-    public function assign(Project $project, User $user)
+    public function assign(Project $project,Task $task, User $user)
     {
         $this->authorize('assign', [Assign::class, $project]);
 
-        $inv = $project->invitable()->create(['user_id' => $user->id]);
+        $inv = $task->invitable()->create(['user_id' => $user->id, 'sender_id' => auth()->id()]);
 
-        event(new InvitedToTeamEvent($inv));
+        event(new AssignmentSendedEvent($inv));
     }
 
     public function accept(Invitation $inv)
@@ -40,15 +38,16 @@ class AssignService
         $this->authorize('accept', [Assign::class, $inv]);
 
         DB::transaction(function () use ($inv) {
-            $project = $inv->invitable;
+            $task = $inv->invitable;
+
             $inv->delete();
 
-            $member = Member::create([
-                'user_id' => auth()->id(),
-                'project_id' => $project->id
+            $assignment = Assign::create([
+                'task_id' => $task->id,
+                'user_id' => auth()->id()
             ]);
-
-            event(new MemberAdded($member));
+            
+            event(new AssignmentAcceptedEvent($assignment));
         });
     }
 
@@ -56,8 +55,8 @@ class AssignService
     {
         $this->authorize('reject', [Assign::class, $inv]);
 
-        event(new MemberRejectedEvent($inv->invitable, auth()->id()));
-
+        event(new AssignmentRejectedEvent($inv));
+        
         $inv->delete();
     }
 
@@ -65,7 +64,7 @@ class AssignService
     {
         $this->authorize('delete', [Assign::class, $project, $user]);
         $project->members()
-            ->where('id', '=', $user->id)
+            ->where('users.id', '=', $user->id)
             ->delete();
     }
 }

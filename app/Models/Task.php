@@ -50,9 +50,9 @@ class Task extends Model
     /**
      * Get the user assigned to the task.
      */
-    public function assignedUser(): BelongsTo
+    public function assignees()
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsToMany(User::class,'assigns','task_id','user_id');
     }
 
     public function invitable()

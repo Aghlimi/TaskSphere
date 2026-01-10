@@ -9,4 +9,8 @@ class Assign extends Model
 {
     /** @use HasFactory<\Database\Factories\AssignFactory> */
     use HasFactory;
+    protected $fillable = [
+        'task_id',
+        'user_id'
+    ];
 }

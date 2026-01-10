@@ -20,7 +20,7 @@ class InvitationFactory extends Factory
     // protected $model = Invitation::class;
     public function forProject($id): InvitationFactory
     {
-        return $this->state(function ()use ($id) {
+        return $this->state(function () use ($id) {
             return [
                 'invitable_id' => $id,
                 'invitable_type' => Project::class,
@@ -28,11 +28,11 @@ class InvitationFactory extends Factory
         });
     }
 
-    public function forTask()
+    public function forTask($id)
     {
-        return $this->state(function () {
+        return $this->state(function () use ($id) {
             return [
-                'invitable_id' => Task::factory(),
+                'invitable_id' => $id,
                 'invitable_type' => Task::class
             ];
         });

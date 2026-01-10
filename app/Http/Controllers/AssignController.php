@@ -2,64 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Assign;
-use Illuminate\Http\Request;
+use App\Models\Invitation;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
+use App\Services\AssignService;
 
 class AssignController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+
+    public function __construct(public AssignService $assignService)
     {
-        //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(Project $project,$feature, Task $task)
     {
-        //
+        $assignees = $this->assignService->getTaskAssignees($project, $task);
+        return response()->json($assignees, 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function assign(Project $project,$feature, Task $task, User $user)
     {
-        //
+        $this->assignService->assign($project, $task, $user);
+        return response()->json(['message' => 'Assignment invitation sent successfully.'], 200);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Assign $assign)
+    public function accept(Project $project, $feature, Task $task, Invitation $invitation)
     {
-        //
+        $this->assignService->accept($invitation);
+        return response()->json(['message' => 'Assignment accepted successfully.'], 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Assign $assign)
+    public function reject(Project $project, $feature, Task $task , Invitation $invitation)
     {
-        //
+        $this->assignService->reject($invitation);
+        return response()->noContent();
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Assign $assign)
+    public function delete(Project $project,$feature, $task, User $user)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Assign $assign)
-    {
-        //
+        $this->assignService->delete($project, $user);
+        return response()->noContent();
     }
 }
