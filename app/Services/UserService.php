@@ -2,12 +2,9 @@
 
 namespace App\Services;
 
-use App\Events\ErrorLogs;
-use App\Exceptions\ResponceException;
 use App\Models\User;
 use App\Events\UserCreated;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 

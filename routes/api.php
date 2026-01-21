@@ -1,6 +1,11 @@
 <?php
 use Illuminate\Support\Facades\Route;
 
+Route::get("/", function () {
+    throw new \Exception("hegsdfikerlidsgu");
+    return response()->json(["message" => "Welcome to TaskSphere API"]);
+});
+
 require __DIR__ . '/User/route.php';
 
 Route::prefix('/projects')->middleware('auth:sanctum')->group(function () {

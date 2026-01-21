@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ProjectCreated;
 use App\Http\Requests\ProjectRequest;
 use App\Models\Project;
-use App\Models\User;
 use App\Services\ProjectService;
-use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
@@ -31,9 +30,7 @@ class ProjectController extends Controller
 
         $data = $request->validated();
 
-        $project = $this->projectService->create($data,auth()->id());
-
-        event(new \App\Events\ProjectCreated($project));
+        $project = $this->projectService->create($data, auth()->id());
 
         return response()->json($project, 201);
     }
@@ -60,7 +57,7 @@ class ProjectController extends Controller
         $project = $this->projectService->update($project, $data);
 
         return response()
-                ->json($project, 200);
+            ->json($project, 200);
     }
 
     public function destroy(Project $project)

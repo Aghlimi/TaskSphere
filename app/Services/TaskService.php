@@ -5,11 +5,9 @@ namespace App\Services;
 use App\Models\Feature;
 use App\Models\Task;
 use App\Events\TaskCreated;
-use App\Events\CompleteTask;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Log;
 
 class TaskService
 {

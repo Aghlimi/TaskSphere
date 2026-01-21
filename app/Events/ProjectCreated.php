@@ -18,14 +18,12 @@ class ProjectCreated
     /**
      * The project instance.
      */
-    public Project $project;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Project $project)
+    public function __construct(public Project $project)
     {
-        $this->project = $project;
     }
 
     /**
