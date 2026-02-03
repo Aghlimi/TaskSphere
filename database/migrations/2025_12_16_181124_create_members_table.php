@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('members', function (Blueprint $table) {
             $table->id();
-            $table->enum('role',['owner','admin','member'])->default('member');
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('project_id');
+            $table->enum('role',['owner','admin','member'])->default('member')->index();
+            $table->unsignedBigInteger('user_id')->index();
+            $table->unsignedBigInteger('project_id')->index();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
             $table->timestamps();

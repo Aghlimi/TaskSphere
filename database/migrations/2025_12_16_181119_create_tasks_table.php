@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('description')->nullable();
-            $table->enum('status',['pending', 'completed'])->default('pending');
-            $table->unsignedBigInteger('feature_id');
+            $table->string('title')->index();
+            $table->text('description')->nullable()->index();
+            $table->enum('status',['pending', 'completed'])->default('pending')->index();
+            $table->unsignedBigInteger('feature_id')->index();
             $table->date('completed_at')->nullable();
             $table->foreign('feature_id')->references('id')->on('features')->onDelete('cascade');
             $table->timestamps();
