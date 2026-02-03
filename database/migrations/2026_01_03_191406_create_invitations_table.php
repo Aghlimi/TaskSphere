@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('invitations', function (Blueprint $table) {
             $table->id();
             $table->morphs('invitable');
-            $table->index(['invitable_type', 'invitable_id']);
 
             $table->foreignId('sender_id')->references('id')->on('users')->onDelete('cascade');
             $table->index('sender_id');
