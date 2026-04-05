@@ -44,6 +44,7 @@ routes/
 ├── api.php             # API routes
 ├── web.php             # Web routes
 └── [Entity folders]/    # Organized route files
+tests # test for each feature, automated with GitHub Action CI
 ```
 
 ## Installation
