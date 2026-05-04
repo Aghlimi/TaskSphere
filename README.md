@@ -1,8 +1,6 @@
-`# TaskSphere
+# TaskSphere
 
 A comprehensive task and project management system built with Laravel.
-
-> **⚠️ Note: This project is currently in development and actively being worked on.**
 
 ## About
 
