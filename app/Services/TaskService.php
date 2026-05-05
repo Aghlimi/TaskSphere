@@ -6,6 +6,7 @@ use App\Models\Feature;
 use App\Models\Task;
 use App\Events\TaskCreated;
 use App\Models\User;
+use App\Repositories\Contracts\TaskRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -13,18 +14,20 @@ class TaskService
 {
     use AuthorizesRequests;
 
+    public function __construct(private TaskRepositoryInterface $tasks)
+    {
+    }
+
     public function all(Feature $feature): Collection|null
     {
         $this->authorize('viewAny', [Task::class, $feature]);
 
-        return $feature->tasks()
-            ->select('created_at', 'status', 'id', 'title', 'description')
-            ->get();
+        return $this->tasks->allForFeature($feature);
     }
 
     public function find(int $id): ?Task
     {
-        $task = Task::find($id)->first();
+        $task = $this->tasks->findById($id);
         if (!$task)
             return null;
 
@@ -37,10 +40,7 @@ class TaskService
     {
         $this->authorize('create', [Task::class, $feature]);
 
-        $task = Task::create([
-            ...$data,
-            'feature_id' => $feature->first('id')->id
-        ]);
+        $task = $this->tasks->create($data, $feature);
 
         event(new TaskCreated($task));
 
@@ -51,21 +51,17 @@ class TaskService
     {
         $this->authorize('update', $task);
 
-        $task->update($data);
-
-        return $task;
+        return $this->tasks->update($task, $data);
     }
 
     public function delete(Task $task): void
     {
         $this->authorize('delete', $task);
-        $task->delete();
+        $this->tasks->delete($task);
     }
 
     public function getTasksForUser(User $user): Collection
     {
-        return $user->tasks()
-            ->select('id', 'title', 'status', 'created_at')
-            ->get();
+        return $this->tasks->allForUser($user);
     }
 }

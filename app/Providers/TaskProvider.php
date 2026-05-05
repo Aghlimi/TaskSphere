@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\Task;
 use App\Policies\TaskPolicy;
 use App\Services\TaskService;
+use App\Repositories\TaskRepository;
+use App\Repositories\Contracts\TaskRepositoryInterface;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,6 +20,7 @@ class TaskProvider extends ServiceProvider
         $this->app->singleton('TaskService', function () {
             return new TaskService();
         });
+        $this->app->bind(TaskRepositoryInterface::class, TaskRepository::class);
     }
 
     /**

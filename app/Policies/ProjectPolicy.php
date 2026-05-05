@@ -2,12 +2,16 @@
 
 namespace App\Policies;
 
-use App\Models\Member;
 use App\Models\Project;
 use App\Models\User;
+use App\Repositories\Contracts\MemberRepositoryInterface;
 
 class ProjectPolicy
 {
+    public function __construct(private MemberRepositoryInterface $members)
+    {
+    }
+
     /**
      * Determine whether the user can view any models.
      */
@@ -21,7 +25,7 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        $access = $project->members()->wherePivot('user_id', '=', $user->id)->exists();
+        $access = $this->members->hasMembership($user, $project);
         return $access || $user->role === "admin";
     }
 
@@ -38,10 +42,7 @@ class ProjectPolicy
      */
     public function update(User $user, Project $project): bool
     {
-        $access = $project->members()
-            ->wherePivot('user_id', '=', $user->id)
-            ->wherePivot('role', 'owner')
-            ->exists();
+        $access = $this->members->hasRole($user, $project, ['owner']);
         return $access || $user->role === "admin";
     }
 
@@ -50,9 +51,6 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project): bool
     {
-        return $user->role === "admin" || $project->members()
-            ->wherePivot('user_id', '=', $user->id)
-            ->wherePivot('role', 'owner')
-            ->exists();
+        return $user->role === "admin" || $this->members->hasRole($user, $project, ['owner']);
     }
 }

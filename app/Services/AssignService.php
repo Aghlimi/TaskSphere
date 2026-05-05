@@ -10,6 +10,8 @@ use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Repositories\Contracts\AssignRepositoryInterface;
+use App\Repositories\Contracts\MemberRepositoryInterface;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 
@@ -17,18 +19,23 @@ class AssignService
 {
     use AuthorizesRequests;
 
+    public function __construct(
+        private AssignRepositoryInterface $assigns,
+        private MemberRepositoryInterface $members
+    ) {
+    }
+
     public function getTaskAssignees(Project $project, Task $task)
     {
         $this->authorize('viewAssignees', [Assign::class, $project]);
-        return $task->assignees()->select('name', 'email')
-            ->get();
+        return $this->assigns->getTaskAssignees($task);
     }
 
     public function assign(Project $project,Task $task, User $user)
     {
         $this->authorize('assign', [Assign::class, $project]);
 
-        $inv = $task->invitable()->create(['user_id' => $user->id, 'sender_id' => auth()->id()]);
+        $inv = $this->assigns->invite($task, $user, auth()->id());
 
         event(new AssignmentSendedEvent($inv));
     }
@@ -38,14 +45,7 @@ class AssignService
         $this->authorize('accept', [Assign::class, $inv]);
 
         DB::transaction(function () use ($inv) {
-            $task = $inv->invitable;
-
-            $inv->delete();
-
-            $assignment = Assign::create([
-                'task_id' => $task->id,
-                'user_id' => auth()->id()
-            ]);
+            $assignment = $this->assigns->accept($inv, auth()->id());
             
             event(new AssignmentAcceptedEvent($assignment));
         });
@@ -57,14 +57,12 @@ class AssignService
 
         event(new AssignmentRejectedEvent($inv));
         
-        $inv->delete();
+        $this->assigns->reject($inv);
     }
 
     public function delete(Project $project, User $user)
     {
         $this->authorize('delete', [Assign::class, $project, $user]);
-        $project->members()
-            ->where('users.id', '=', $user->id)
-            ->delete();
+        $this->members->delete($project, $user);
     }
 }

@@ -3,24 +3,22 @@
 namespace App\Policies;
 
 use App\Models\Feature;
-use App\Models\Member;
 use App\Models\Project;
 use App\Models\User;
-use Exception;
-use Illuminate\Auth\Access\Response;
-use Illuminate\Support\Facades\Log;
+use App\Repositories\Contracts\MemberRepositoryInterface;
 
 class FeaturePolicy
 {
+    public function __construct(private MemberRepositoryInterface $members)
+    {
+    }
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user,$project): bool
     {
-
-        return Member::where('user_id', $user->id)
-            ->where('project_id', $project->id)
-            ->exists();
+        return $this->members->hasMembership($user, $project);
     }
 
     /**
@@ -28,9 +26,7 @@ class FeaturePolicy
      */
     public function view(User $user, Feature $feature): bool
     {
-        return Member::where('user_id', $user->id)
-            ->where('project_id', $feature->project_id)
-            ->exists();
+        return $this->members->hasMembership($user, $feature->project);
     }
 
     /**
@@ -38,9 +34,7 @@ class FeaturePolicy
      */
     public function create(User $user,Project $project): bool
     {
-        $member = Member::where('user_id', $user->id)
-            ->where('project_id', $project->id)->first();
-        return $member && ($member->role === 'admin' || $member->role === 'owner');
+        return $this->members->hasRole($user, $project, ['admin', 'owner']);
     }
 
     /**
@@ -48,10 +42,7 @@ class FeaturePolicy
      */
     public function update(User $user, Feature $feature): bool
     {
-        return Member::where('user_id', $user->id)
-            ->where('project_id', $feature->project_id)
-            ->where('role', 'admin')
-            ->exists();
+        return $this->members->hasRole($user, $feature->project, ['admin']);
     }
 
     /**
@@ -59,9 +50,6 @@ class FeaturePolicy
      */
     public function delete(User $user, Feature $feature): bool
     {
-        return Member::where('user_id', $user->id)
-            ->where('project_id', $feature->project_id)
-            ->where('role', 'admin')
-            ->exists();
+        return $this->members->hasRole($user, $feature->project, ['admin']);
     }
 }

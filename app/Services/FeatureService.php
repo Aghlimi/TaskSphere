@@ -5,18 +5,23 @@ namespace App\Services;
 use App\Models\Feature;
 use App\Events\FeatureCreated;
 use App\Models\Project;
+use App\Repositories\Contracts\FeatureRepositoryInterface;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class FeatureService
 {
     use AuthorizesRequests;
+
+    public function __construct(private FeatureRepositoryInterface $features)
+    {
+    }
     /**
      * Get all features.
      */
     public function all(Project $project)
     {
         $this->authorize('viewAny', [Feature::class, $project]);
-        return $project->features()->get();
+        return $this->features->allForProject($project);
     }
 
     /**
@@ -35,9 +40,7 @@ class FeatureService
     {
         $this->authorize('create', [Feature::class, $project]);
 
-        $feature = new Feature($data);
-        $feature->project_id = $project->id;
-        $feature->save();
+        $feature = $this->features->create($data, $project);
 
         event(new FeatureCreated($feature));
 
@@ -51,9 +54,7 @@ class FeatureService
     {
         $this->authorize('update', $feature);
 
-        $feature->update($data);
-
-        return $feature;
+        return $this->features->update($feature, $data);
     }
 
     /**
@@ -62,6 +63,6 @@ class FeatureService
     public function delete(Feature $feature): void
     {
         $this->authorize('delete', $feature);
-        $feature->delete();
+        $this->features->delete($feature);
     }
 }

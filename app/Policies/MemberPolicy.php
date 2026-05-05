@@ -3,31 +3,30 @@
 namespace App\Policies;
 
 use App\Models\Invitation;
+use App\Models\Member;
 use App\Models\Project;
 use App\Models\User;
+use App\Repositories\Contracts\MemberRepositoryInterface;
 
 class MemberPolicy
 {
+    public function __construct(private MemberRepositoryInterface $members)
+    {
+    }
+
     public function showMembers(User $user, Project $project)
     {
-        return $project->members()
-            ->where('users.id', '=', $user->id)
-            ->exists();
+        return $this->members->hasMembership($user, $project);
     }
 
     public function userRole(User $user, Project $project)
     {
-        return $project->members()
-            ->where('users.id', '=', $user->id)
-            ->exists();
+        return $this->members->hasMembership($user, $project);
     }
 
     public function invite(User $user, Project $project)
     {
-        return $project->members()
-            ->where('users.id', '=', $user->id)
-            ->wherePivotIn('role', ['admin', 'owner'])
-            ->exists();
+        return $this->members->hasRole($user, $project, ['admin', 'owner']);
     }
 
     public function accept(User $user, Invitation $inv)
@@ -44,28 +43,18 @@ class MemberPolicy
     {
         if ($target->id == $user->id)
             return true;
-        $access = $project->members()->whereIn('users.id', [$user->id, $target->id])
-            ->whereIn('members.role', ['admin', 'owner'])
-            ->orWhere(function ($q) use ($target) {
-                $q->where('users.id', '=', $target->id)
-                    ->where('members.role', '=', 'member');
-            })
-            ->count();
 
-        return $access === 2;
+        return $this->members->hasRole($user, $project, ['admin', 'owner'])
+            && $this->members->hasMembership($target, $project);
     }
 
     public function setAdmin(User $user, Project $project)
     {
-        return $project->members()
-            ->where('users.id', '=', $user->id)
-            ->wherePivot('role', 'owner')
-            ->exists();
+        return $this->members->hasRole($user, $project, ['owner']);
     }
 
     public function removeAdmin(User $user, Project $project)
     {
-        return $project->members()->where('users.id', '=', $user->id)
-            ->wherePivot('role', '=', 'owner')->exists();
+        return $this->members->hasRole($user, $project, ['owner']);
     }
 }

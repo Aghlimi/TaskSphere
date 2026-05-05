@@ -2,17 +2,20 @@
 
 namespace App\Services;
 
-use App\Models\Member;
 use App\Models\Project;
 use App\Models\User;
 use App\Events\ProjectCreated;
-use DB;
+use App\Repositories\Contracts\ProjectRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProjectService
 {
     use AuthorizesRequests;
+
+    public function __construct(private ProjectRepositoryInterface $projects)
+    {
+    }
 
     /**
      * Get all projects for a user.
@@ -24,7 +27,7 @@ class ProjectService
     {
         $this->authorize('viewAny', [Project::class, $user]);
 
-        return $user->projects()->addSelect('members.role')->get();
+        return $this->projects->allForUser($user);
     }
 
     /**
@@ -49,15 +52,7 @@ class ProjectService
     {
         $this->authorize('create', Project::class);
 
-        $project = DB::transaction(function () use ($data, $user_id) {
-            $project = Project::create($data);
-            Member::create([
-                'user_id' => $user_id,
-                'project_id' => $project->id,
-                'role' => 'owner',
-            ]);
-            return $project;
-        });
+        $project = $this->projects->create($data, $user_id);
 
         event(new ProjectCreated($project));
         return $project;
@@ -74,8 +69,7 @@ class ProjectService
     {
         $this->authorize("update", [Project::class, $project]);
 
-        $project->update($data);
-        return $project;
+        return $this->projects->update($project, $data);
     }
 
     /**
@@ -87,6 +81,6 @@ class ProjectService
     public function delete(Project $project): void
     {
         $this->authorize('delete', [$project]);
-        $project->delete();
+        $this->projects->delete($project);
     }
 }
